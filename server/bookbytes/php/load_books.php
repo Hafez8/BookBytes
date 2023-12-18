@@ -1,33 +1,58 @@
 <?php
+//error_reporting(0);
 include_once("dbconnect.php");
-$userid = $_POST['userid'];
-$sqlloadproduct = "SELECT * FROM tbl_books;";
-$result = $conn‐>query($sqlloadbooks);
+$title = $_GET['title'];
 
-if ($result‐>num_rows > 0) {
-    $response["books"] = array();
-while ($row = $result‐>fetch_assoc()) {
-        $prlist = array();
-        $prlist['book_id'] = $row['book_id'];
-        $prlist['user_id'] = $row['user_id'];
-        $prlist['book_isbn'] = $row['book_isbn'];
-        $prlist['book_title'] = $row['book_title'];
-        $prlist['book_desc'] = $row['book_desc'];
-        $prlist['book_author'] = $row['book_author'];
-        $prlist['book_price'] = $row['book_price'];
-        $prlist['book_qty'] = $row['book_qty'];
-        $prlist['book_status'] = $row['book_status'];
-        $prlist['book_date'] = $row['book_date'];
-        array_push($response["products"],$prlist);
+//step 1
+$results_per_page = 10;
+//step 2
+if (isset($_GET['pageno'])){
+	$pageno = (int)$_GET['pageno'];
+}else{
+	$pageno = 1;
+}
+//step 3
+$page_first_result = ($pageno - 1) * $results_per_page;
+
+//step 4
+$sqlloadbooks = "SELECT * FROM `tbl_books` WHERE `book_title` LIKE '%$title%'";
+$result = $conn->query($sqlloadbooks);
+$number_of_result = $result->num_rows;
+$number_of_page = ceil($number_of_result / $results_per_page);
+
+//step 5
+$sqlloadbooks = $sqlloadbooks . " LIMIT $page_first_result , $results_per_page";
+
+$result = $conn->query($sqlloadbooks);
+if ($result->num_rows > 0) {
+    $booklist["books"] = array();
+    while ($row = $result->fetch_assoc()) {
+        $book = array();
+        $book['book_id'] = $row['book_id'];
+        $book['user_id'] = $row['user_id'];
+        $book['book_isbn'] = $row['book_isbn'];
+        $book['book_title'] = $row['book_title'];
+        $book['book_desc'] = $row['book_desc'];
+        $book['book_author'] = $row['book_author'];
+        $book['book_status'] = $row['book_status'];
+        $book['book_price'] = $row['book_price'];
+        $book['book_qty'] = $row['book_qty'];
+        $book['book_qty'] = $row['book_qty'];
+        $book['book_date'] = $row['book_date'];
+        array_push( $booklist["books"],$book);
     }
-    $response = array('status' => 'success', 'data' => $products);
+    $response = array('status' => 'success', 'data' => $booklist, 'numofpage'=>$number_of_page,'numberofresult'=>$number_of_result);
     sendJsonResponse($response);
 }else{
-     $response = array('status' => 'failed', 'data' => null);
-    sendJsonResponse($response);
+	$response = array('status' => 'failed', 'data' => null);
+	sendJsonResponse($response);
 }
+
+
 function sendJsonResponse($sentArray)
 {
-    header('Content‐Type: application/json');
+    header('Content-Type: application/json');
     echo json_encode($sentArray);
 }
+
+?>
