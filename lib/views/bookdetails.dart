@@ -49,6 +49,11 @@ class _BookDetailsState extends State<BookDetails> {
                 value: 1,
                 child: const Text("Delete"),
               ),
+              PopupMenuItem<int>(
+                value: 2,
+                enabled: bookowner,
+                child: const Text("add to cart"),
+              ),
             ];
           }, onSelected: (value) {
             if (value == 0) {
@@ -69,7 +74,17 @@ class _BookDetailsState extends State<BookDetails> {
                   backgroundColor: Colors.red,
                 ));
               }
-            } else if (value == 2) {
+            }
+            else if (value == 2) {
+              if (widget.book.userId == widget.book.userId) {
+                addtocartdialog();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Not allowed!!!"),
+                  backgroundColor: Colors.red,
+                ));
+              }
+            }else if (value == 3) {
             }
           }),
         ],
@@ -216,7 +231,76 @@ class _BookDetailsState extends State<BookDetails> {
     );
   }
 
+  void addtocartdialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10.0))),
+          title: const Text(
+            "add to cart?",
+            style: TextStyle(),
+          ),
+          content: const Text("Are you sure?", style: TextStyle()),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                "Yes",
+                style: TextStyle(),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                addtocart();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                "No",
+                style: TextStyle(),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Canceled"),
+                  backgroundColor: Colors.red,
+                ));
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void deleteBook() {
+    http.post(
+        Uri.parse("${MyServerConfig.server}/bookbytes/php/delete_book.php"),
+        body: {
+          "userid": widget.user.userid.toString(),
+          "bookid": widget.book.bookId.toString(),
+        }).then((response) {
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        if (data['status'] == "success") {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Delete Success"),
+            backgroundColor: Colors.green,
+          ));
+          Navigator.of(context).pop();
+          // Navigator.push(context,
+          //     MaterialPageRoute(builder: (content) => const LoginPage()));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Delete Failed"),
+            backgroundColor: Colors.red,
+          ));
+        }
+      }
+    });
+  }
+
+    void addtocart() {
     http.post(
         Uri.parse("${MyServerConfig.server}/bookbytes/php/delete_book.php"),
         body: {
